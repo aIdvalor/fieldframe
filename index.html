@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fieldframe — Jobsite Photo Prototype</title>
+<style>
+  :root{
+    --bg:#0f1115;
+    --panel:#161a21;
+    --panel2:#1d222b;
+    --accent:#ff6a3d;
+    --accent2:#3dd6ff;
+    --text:#eef1f5;
+    --muted:#8a93a3;
+    --green:#3ddc84;
+    --amber:#ffb84d;
+    --red:#ff6161;
+    --border:#2a303c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:linear-gradient(160deg,#0b0d11,#12151b 60%,#0b0d11);
+    color:var(--text);
+    min-height:100vh;
+  }
+  header{
+    padding:28px 32px 8px;
+    text-align:center;
+  }
+  header h1{
+    font-size:22px;
+    margin:0 0 4px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:24px 24px 80px;
+    display:grid;
+    grid-template-columns:1fr 380px;
+    gap:32px;
+  }
+  @media (max-width:920px){
+    .wrap{grid-template-columns:1fr;}
+  }
+  .stage{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:20px;
+  }
+  .nav-tabs{
+    display:flex;
+    gap:8px;
+    background:var(--panel);
+    padding:6px;
+    border-radius:14px;
+    border:1px solid var(--border);
+  }
+  .nav-tabs button{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    padding:10px 18px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .2s ease;
+  }
+  .nav-tabs button.active{
+    background:var(--accent);
+    color:#1a1a1a;
+  }
+  .nav-tabs button:not(.active):hover{
+    color:var(--text);
+    background:var(--panel2);
+  }
+  .phone{
+    width:340px;
+    height:700px;
+    background:#000;
+    border-radius:44px;
+    border:8px solid #1c1f26;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+    position:relative;
+    overflow:hidden;
+  }
+  .notch{
+    position:absolute;
+    top:0; left:50%;
+    transform:translateX(-50%);
+    width:150px; height:26px;
+    background:#000;
+    border-bottom-left-radius:16px;
+    border-bottom-right-radius:16px;
+    z-index:20;
+  }
+  .screen{
+    position:absolute;
+    inset:0;
+    display:none;
+    flex-direction:column;
+    background:#0d0f12;
+    animation:fadein .35s ease;
+  }
+  .screen.active{display:flex;}
+  @keyframes fadein{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+  /* Screen 1: Capture */
+  .topbar{
+    padding:38px 16px 10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    color:#fff;
+    font-size:13px;
+    font-weight:600;
+  }
+  .toggle-pill{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(255,255,255,.12);
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:11px;
+  }
+  .dot-on{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);}
+  .viewfinder{
+    flex:1;
+    margin:8px 16px 0;
+    border-radius:20px;
+    background:
+      linear-gradient(160deg,#3a4a3f,#26302a 40%, #1b211d 100%);
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .viewfinder::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      repeating-linear-gradient(100deg, rgba(255,255,255,.03) 0 40px, transparent 40px 80px),
+      radial-gradient(circle at 30% 20%, rgba(255,255,255,.06), transparent 40%);
+  }
+  .roofline{
+    position:absolute;
+    bottom:0; left:0; right:0;
+    height:55%;
+    background:linear-gradient(180deg, transparent, rgba(0,0,0,.35));
+  }
+  .shutter-row{
+    padding:22px 0 30px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    position:relative;
+    z-index:5;
+    width:100%;
+  }
+  .shutter{
+    width:70px; height:70px;
+    border-radius:50%;
+    background:#fff;
+    border:4px solid rgba(255,255,255,.35);
+    cursor:pointer;
+    transition:transform .1s ease;
+  }
+  .shutter:active{transform:scale(.9);}
+  .project-tag{
+    position:absolute;
+    top:78px; left:24px;
+    background:rgba(0,0,0,.5);
+    color:#fff;
+    font-size:12px;
+    padding:6px 10px;
+    border-radius:8px;
+    z-index:5;
+  }
+  .last-tags{
+    position:absolute;
+    bottom:110px; left:24px; right:24px;
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    z-index:5;
+  }
+  .chip{
+    background:rgba(255,255,255,.14);
+    color:#fff;
+    font-size:11px;
+    padding:5px 10px;
+    border-radius:20px;
+    border:1px solid rgba(255,255,255,.2);
+  }
+
+  /* Screen 2: Processing */
+  .proc-wrap{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    padding:44px 20px 20px;
+    color:#fff;
+  }
+  .proc-thumb{
+    width:100%;
+    height:220px;
+    border-radius:16px;
+    background:linear-gradient(160deg,#3a4a3f,#26302a 40%, #1b211d 100%);
+    position:relative;
+    overflow:hidden;
+    margin-bottom:18px;
+  }
+  .proc-thumb::before{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 30% 20%, rgba(255,255,255,.08), transparent 45%);
+  }
+  .scan-line{
+    position:absolute;
+    left:0; right:0; height:3px;
+    background:linear-gradient(90deg, transparent, var(--accent2), transparent);
+    animation:scan 1.8s linear infinite;
+    box-shadow:0 0 14px var(--accent2);
+  }
+  @keyframes scan{
+    0%{top:0;}
+    100%{top:100%;}
+  }
+  .proc-status{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .spinner{
+    width:14px;height:14px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,.2);
+    border-top-color:var(--accent2);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .conf-card{
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px;
+    margin-bottom:12px;
+  }
+  .conf-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  .conf-tagname{font-size:14px; font-weight:600;}
+  .conf-badge{
+    font-size:11px;
+    font-weight:700;
+    padding:3px 9px;
+    border-radius:20px;
+  }
+  .badge-high{background:rgba(61,220,132,.15); color:var(--green);}
+  .badge-med{background:rgba(255,184,77,.15); color:var(--amber);}
+  .badge-low{background:rgba(255,97,97,.15); color:var(--red);}
+  .conf-bar-track{
+    height:6px;
+    border-radius:6px;
+    background:#2a2f38;
+    overflow:hidden;
+  }
+  .conf-bar-fill{
+    height:100%;
+    border-radius:6px;
+  }
+  .action-row{
+    margin-top:auto;
+    display:flex;
+    gap:10px;
+  }
+  .btn{
+    flex:1;
+    padding:12px;
+    border-radius:12px;
+    border:none;
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--accent); color:#1a1a1a;}
+  .btn-secondary{background:var(--panel2); color:#fff; border:1px solid var(--border);}
+
+  /* Screen 3: Timeline */
+  .tl-wrap{
+    flex:1;
+    padding:44px 16px 20px;
+    color:#fff;
+    overflow-y:auto;
+  }
+  .tl-header{
+    font-size:16px;
+    font-weight:700;
+    margin-bottom:2px;
+  }
+  .tl-sub{
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:16px;
+  }
+  .tl-item{
+    display:flex;
+    gap:12px;
+    margin-bottom:16px;
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:10px;
+  }
+  .tl-thumb{
+    width:64px; height:64px;
+    border-radius:10px;
+    flex-shrink:0;
+    background:linear-gradient(160deg,#3a4a3f,#26302a 40%, #1b211d 100%);
+  }
+  .tl-meta{flex:1; min-width:0;}
+  .tl-time{font-size:11px; color:var(--muted); margin-bottom:4px;}
+  .tl-tags{display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;}
+  .ai-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    background:rgba(61,214,255,.15);
+    color:var(--accent2);
+    font-size:10px;
+    font-weight:700;
+    padding:2px 7px;
+    border-radius:10px;
+    margin-left:6px;
+  }
+
+  /* Right panel: annotations */
+  .annotations{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:22px;
+    height:fit-content;
+    position:sticky;
+    top:24px;
+  }
+  .annotations h2{
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--accent);
+    margin:0 0 14px;
+  }
+  .note{
+    margin-bottom:16px;
+    padding-bottom:16px;
+    border-bottom:1px solid var(--border);
+  }
+  .note:last-child{border-bottom:none; margin-bottom:0; padding-bottom:0;}
+  .note-label{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .note-body{
+    font-size:13.5px;
+    line-height:1.55;
+    color:#dfe3e9;
+  }
+  .note-body b{color:#fff;}
+  .table-mini{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12px;
+    margin-top:8px;
+  }
+  .table-mini td, .table-mini th{
+    border:1px solid var(--border);
+    padding:6px 8px;
+    text-align:left;
+  }
+  .table-mini th{background:var(--panel2); color:var(--muted); font-weight:600;}
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:12px;
+    padding:20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AI-Powered Capture Flow</h1>
+  <p>Independent prototype · click through the three screens below</p>
+</header>
+
+<div class="wrap">
+  <div class="stage">
+    <div class="nav-tabs">
+      <button class="tab-btn active" data-screen="s1">1 · Capture</button>
+      <button class="tab-btn" data-screen="s2">2 · AI Processing</button>
+      <button class="tab-btn" data-screen="s3">3 · Organized Output</button>
+    </div>
+
+    <div class="phone">
+      <div class="notch"></div>
+
+      <!-- SCREEN 1: CAPTURE -->
+      <div class="screen active" id="s1">
+        <div class="topbar">
+          <span>Riverside Roof Replacement</span>
+          <div class="toggle-pill"><span class="dot-on"></span>Smart Tagging</div>
+        </div>
+        <div class="viewfinder">
+          <div class="roofline"></div>
+          <div class="project-tag">📍 On site · Riverside Rd</div>
+          <div class="last-tags">
+            <span class="chip">Recent: Framing</span>
+            <span class="chip">Framing</span>
+            <span class="chip">Exterior</span>
+          </div>
+          <div class="shutter-row">
+            <button class="shutter" onclick="goTo('s2', true)"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: PROCESSING -->
+      <div class="screen" id="s2">
+        <div class="proc-wrap">
+          <div class="proc-thumb"><div class="scan-line"></div></div>
+          <div class="proc-status"><span class="spinner"></span> Analyzing photo…</div>
+
+          <div class="conf-card">
+            <div class="conf-row">
+              <span class="conf-tagname">Framing — Exterior</span>
+              <span class="conf-badge badge-high">92% · Auto-filing</span>
+            </div>
+            <div class="conf-bar-track"><div class="conf-bar-fill" style="width:92%; background:var(--green);"></div></div>
+          </div>
+
+          <div class="conf-card">
+            <div class="conf-row">
+              <span class="conf-tagname">Roof Decking</span>
+              <span class="conf-badge badge-med">68% · Confirm?</span>
+            </div>
+            <div class="conf-bar-track"><div class="conf-bar-fill" style="width:68%; background:var(--amber);"></div></div>
+          </div>
+
+          <div class="action-row">
+            <button class="btn btn-secondary" onclick="goTo('s2low')">Not quite — edit tags</button>
+            <button class="btn btn-primary" onclick="goTo('s3')">Looks good</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 2 (low confidence variant, reused id via toggle) -->
+      <div class="screen" id="s2low">
+        <div class="proc-wrap">
+          <div class="proc-thumb"></div>
+          <div class="proc-status" style="color:var(--red);">⚠ Low confidence match</div>
+          <div class="conf-card">
+            <div class="conf-row">
+              <span class="conf-tagname">Best guess: Misc</span>
+              <span class="conf-badge badge-low">31%</span>
+            </div>
+            <div class="conf-bar-track"><div class="conf-bar-fill" style="width:31%; background:var(--red);"></div></div>
+          </div>
+          <div class="note-body" style="margin-bottom:14px; color:var(--muted);">Help us tag this one — pick from your project tags below.</div>
+          <div class="last-tags" style="position:static; margin-bottom:14px;">
+            <span class="chip" onclick="pickTag(this)">Framing</span>
+            <span class="chip" onclick="pickTag(this)">Roof Decking</span>
+            <span class="chip" onclick="pickTag(this)">Electrical</span>
+            <span class="chip" onclick="pickTag(this)">Exterior</span>
+          </div>
+          <div class="action-row">
+            <button class="btn btn-primary" onclick="goTo('s3')" style="flex:none; width:100%;">Save & File</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 3: TIMELINE -->
+      <div class="screen" id="s3">
+        <div class="tl-wrap">
+          <div class="tl-header">Riverside Roof Replacement</div>
+          <div class="tl-sub">Project timeline · 14 photos</div>
+
+          <div class="tl-item">
+            <div class="tl-thumb"></div>
+            <div class="tl-meta">
+              <div class="tl-time">Just now <span class="ai-badge">✨ AI-tagged</span></div>
+              <div style="font-weight:600; font-size:13px;">Framing — Exterior</div>
+              <div class="tl-tags">
+                <span class="chip" style="background:rgba(61,220,132,.12); color:var(--green); border-color:transparent;">Framing</span>
+                <span class="chip" style="background:rgba(61,220,132,.12); color:var(--green); border-color:transparent;">Exterior</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-thumb"></div>
+            <div class="tl-meta">
+              <div class="tl-time">10 min ago <span class="ai-badge">✨ AI-tagged</span></div>
+              <div style="font-weight:600; font-size:13px;">Roof Decking</div>
+              <div class="tl-tags">
+                <span class="chip" style="background:rgba(255,184,77,.12); color:var(--amber); border-color:transparent;">Roof Decking</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-thumb"></div>
+            <div class="tl-meta">
+              <div class="tl-time">42 min ago</div>
+              <div style="font-weight:600; font-size:13px;">Framing</div>
+              <div class="tl-tags">
+                <span class="chip">Framing</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="annotations" id="annotations">
+    <h2 id="ann-title">Screen 1 — Capture</h2>
+    <div id="ann-body"></div>
+  </div>
+</div>
+
+<footer>Personal project; not affiliated with or endorsed by any company. Annotations explain the product reasoning behind signal, threshold, and fallback design.</footer>
+
+<script>
+const notes = {
+  s1: `
+    <div class="note">
+      <div class="note-label">Trigger signal</div>
+      <div class="note-body">AI activates on <b>shutter press</b>, not continuous background vision. Continuous capture-and-analyze on a jobsite phone burns battery, raises privacy questions contractors haven't opted into, and adds compute cost with no incremental value over event-triggered analysis.</div>
+    </div>
+    <div class="note">
+      <div class="note-label">Context passed to model</div>
+      <div class="note-body">Project ID, GPS/site location, timestamp, and the last 3-5 tags used on this project. Most jobsite photos in a session are thematically related (framing → more framing → electrical rough-in), so recency is a strong prior.</div>
+    </div>
+    <div class="note">
+      <div class="note-label">Why no new steps</div>
+      <div class="note-body">Zero added friction to today's capture flow is the constraint that matters most for adoption — the camera is the highest-usage surface in the product; slowing it down is the fastest way to kill trust before the AI even proves itself.</div>
+    </div>
+  `,
+  s2: `
+    <div class="note">
+      <div class="note-label">Confidence bands</div>
+      <div class="note-body">
+      <table class="table-mini">
+        <tr><th>Band</th><th>Behavior</th></tr>
+        <tr><td>High &gt;85%</td><td>Auto-file silently, badge persists</td></tr>
+        <tr><td>Medium 50–85%</td><td>Suggest, one-tap confirm/edit</td></tr>
+        <tr><td>Low &lt;50%</td><td>Manual tag picker, framed as help-us-learn</td></tr>
+      </table>
+      </div>
+    </div>
+    <div class="note">
+      <div class="note-label">Why medium is the default UX</div>
+      <div class="note-body">Most novel photos will land here. One tap keeps a human in the loop without adding real friction — this is the band doing the most trust-building work.</div>
+    </div>
+    <div class="note">
+      <div class="note-label">Threshold isn't one-size-fits-all</div>
+      <div class="note-body">A mis-tagged "electrical" photo that should route to a compliance report costs more than a mis-tagged "misc" photo. Thresholds may need to be <b>category-specific</b>, not global, once there's usage data to calibrate against.</div>
+    </div>
+  `,
+  s2low: `
+    <div class="note">
+      <div class="note-label">Fallback design</div>
+      <div class="note-body">Below 50% confidence, drop straight to today's proven manual tag picker — framed as "help us tag this," not an error state. Never punish the contractor for the model's uncertainty.</div>
+    </div>
+    <div class="note">
+      <div class="note-label">Why this matters beyond UX</div>
+      <div class="note-body">This is also the labeled-data loop: low-confidence corrections are exactly the signal that improves the model over time. The fallback isn't just a UX safety net, it's training data.</div>
+    </div>
+  `,
+  s3: `
+    <div class="note">
+      <div class="note-label">The trust mechanism</div>
+      <div class="note-body">The "AI-tagged" badge persists even on high-confidence, silently-auto-filed photos. Hiding automation behind a confident-looking UI is what erodes trust the first time the model is wrong on an edge case (e.g., a roof photo tagged "framing" because the geometry looked similar under bad lighting).</div>
+    </div>
+    <div class="note">
+      <div class="note-label">Downstream value</div>
+      <div class="note-body">Visibility into what was automated vs. confirmed lets a crew lead spot-check the small % of auto-filed photos without re-reviewing everything — and is the natural home for a future "review AI tags" QA queue.</div>
+    </div>
+    <div class="note">
+      <div class="note-label">Metrics this flow is evaluated against</div>
+      <div class="note-body">Suggestion acceptance rate by band, time-to-file per photo, manual correction rate on high-confidence auto-filed photos, and opt-out rate of Smart Tagging.</div>
+    </div>
+  `
+};
+
+const titles = {
+  s1: "Screen 1 — Capture",
+  s2: "Screen 2 — AI Processing",
+  s2low: "Screen 2b — Low-Confidence Fallback",
+  s3: "Screen 3 — Organized Output"
+};
+
+function goTo(id, viaShutter){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.getElementById('ann-title').textContent = titles[id];
+  document.getElementById('ann-body').innerHTML = notes[id];
+
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const mapped = id === 's2low' ? 's2' : id;
+  const btn = document.querySelector('.tab-btn[data-screen="' + mapped + '"]');
+  if(btn) btn.classList.add('active');
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => goTo(btn.dataset.screen));
+});
+
+function pickTag(el){
+  document.querySelectorAll('#s2low .chip').forEach(c => {
+    c.style.background = 'rgba(255,255,255,.14)';
+    c.style.color = '#fff';
+  });
+  el.style.background = 'var(--accent)';
+  el.style.color = '#1a1a1a';
+}
+
+goTo('s1');
+</script>
+
+</body>
+</html>
