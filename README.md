@@ -6,7 +6,7 @@
 
 **What it does:** A three-screen clickable prototype: capture → AI processing → organized output. AI runs on shutter press (not continuous video) and tags, groups and suggests captions. When confidence is low, it falls back to asking the user instead of guessing. Side annotations explain each design call.
 
-**Try it:** open `index.html` in a browser. No build, no dependencies.
+**Try it:** [live demo](https://aidvalor.github.io/fieldframe/), or open `index.html` locally. No build, no dependencies.
 
 ---
 Personal project; not affiliated with or endorsed by any company. Released under the MIT License.
